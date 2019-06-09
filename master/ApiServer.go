@@ -1,7 +1,9 @@
 package master
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/go-crontab/common"
 	"net"
 	"net/http"
 	"strconv"
@@ -19,10 +21,25 @@ var (
 )
 
 // 保存任务接口
-func handleJobSave(w http.ResponseWriter, r *http.Request) {
+// POST job = {"name": "job1", "command": "echo hello", "cronExpr": "* * * * *"}
+func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	fmt.Println("handleJobSave")
 	// 任务保存到 ETCD 中
+	// 1. 解析 HTTP 表单
+	var (
+		err error
+		postForm string
+		job common.Job
+	)
+	if err = req.ParseForm(); err != nil {
+		fmt.Println("err: ", err)
+	}
+	// 2. 取表单的 job 字段
+	postForm = req.PostForm.Get("job")
+	// 3. 反序列化 job
+	if err = json.Unmarshal([]byte(postForm), &job); err != nil {
 	
+	}
 }
 
 // 初始化服务

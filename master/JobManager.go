@@ -1,6 +1,9 @@
 package master
 
 import (
+	"context"
+	"encoding/json"
+	"github.com/go-crontab/common"
 	"go.etcd.io/etcd/clientv3"
 	"time"
 )
@@ -43,6 +46,36 @@ func InitJobManager() (err error) {
 		client: client,
 		kv:     kv,
 		lease:  lease,
+	}
+	return
+}
+
+func (jobManager *JobManager) SaveJob(job *common.Job) (oldJob *common.Job, err error) {
+	// 把任务保存到 `/cron/jobs/` 任务名 -> json
+	var (
+		jobKey string
+		jobValue []byte
+		putResponse *clientv3.PutResponse
+		oldJobObj common.Job
+	)
+	// etcd 路径
+	jobKey = "/cron/jobs/" + job.Name
+	// 任务信息 JSON
+	if jobValue, err = json.Marshal(job); err != nil {
+		return
+	}
+	// 保存到 ETCD
+	if putResponse, err = G_jobManager.kv.Put(context.TODO(), jobKey, string(jobValue), clientv3.WithPrevKV()); err != nil {
+		return
+	}
+	// 如果是更新返回旧值
+	if putResponse.PrevKv != nil {
+		// 对旧值做反序列化
+		if err = json.Unmarshal(putResponse.PrevKv.Value, &oldJobObj); err != nil {
+			err = nil
+			return
+		}
+		oldJob = &oldJobObj
 	}
 	return
 }
