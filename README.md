@@ -26,8 +26,13 @@ Cron 常见语法
 
 # 2. etcd 协调服务
 
-- Golang 生态中类似 Zookeeper 的组件;
+- Golang 生态中类似 Zookeeper 的组件, 实现了 Raft 算法;
 - 将数据存储在集群中的高可用 K-V 存储;
 - 允许应用实时监听存储中的 K-V 变化;
 - 能够容忍单点故障, 能够应对网络分区(满足AP);
 
+# 3. 系统架构
+
+## 3.2 Worker 内部架构
+
+![image](https://user-images.githubusercontent.com/17758731/59159906-c6062e00-8b02-11e9-952b-35b386c67994.png)
