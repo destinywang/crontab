@@ -35,6 +35,10 @@ func main() {
 	if err = master.InitConfig(confPath); err != nil {
 		fmt.Println("err: ", err)
 	}
+	// 启动任务管理器
+	if err = master.InitJobManager(); err != nil {
+		fmt.Println("err: ", err)
+	}
 	// 启动 ApiHTTP 服务
 	if err = master.InitApiServer(); err != nil {
 		fmt.Println(err)
