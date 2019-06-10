@@ -28,11 +28,11 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	// 任务保存到 ETCD 中
 	// 1. 解析 HTTP 表单
 	var (
-		err error
+		err      error
 		postForm string
-		job common.Job
-		oldJob *common.Job
-		bytes []byte
+		job      common.Job
+		oldJob   *common.Job
+		bytes    []byte
 	)
 	if err = req.ParseForm(); err != nil {
 		//resp.Write(common.BuildErrResp(err))
@@ -59,10 +59,10 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 // POST /job/delete name=job1
 func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	var (
-		err error
-		name string
+		err    error
+		name   string
 		oldJob *common.Job
-		bytes []byte
+		bytes  []byte
 	)
 	// POST: name=job1&code=1
 	if err = req.ParseForm(); err != nil {
@@ -84,8 +84,8 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	var (
 		jobList []*common.Job
-		err error
-		bytes []byte
+		err     error
+		bytes   []byte
 	)
 	if jobList, err = G_jobManager.ListJobs(); err != nil {
 		log.Fatal("err: ", err)
@@ -99,9 +99,9 @@ func handleJobList(resp http.ResponseWriter, req *http.Request) {
 // 强制杀死某个任务
 func handleJobKill(resp http.ResponseWriter, req *http.Request) {
 	var (
-		err error
-		name string
-		bytes[] byte
+		err   error
+		name  string
+		bytes [] byte
 	)
 	if err = req.ParseForm(); err != nil {
 		log.Fatal("err: ", err)
@@ -119,9 +119,11 @@ func handleJobKill(resp http.ResponseWriter, req *http.Request) {
 // 初始化服务
 func InitApiServer() (err error) {
 	var (
-		mux        *http.ServeMux
-		listener   net.Listener
-		httpServer *http.Server
+		mux           *http.ServeMux
+		listener      net.Listener
+		httpServer    *http.Server
+		staticDir     http.Dir          // 静态文件根目录
+		staticHandler http.Handler      // 静态文件的 HTTP 回调
 	)
 	// 配置路由
 	mux = http.NewServeMux()
@@ -129,7 +131,13 @@ func InitApiServer() (err error) {
 	mux.HandleFunc("/job/delete", handleJobDelete)
 	mux.HandleFunc("/job/list", handleJobList)
 	mux.HandleFunc("/job/kill", handleJobKill)
-	fmt.Println("G_config: ", G_config)
+	//fmt.Println("G_config: ", G_config)
+	log.Print("G_config: ", G_config)
+	// 静态文件目录
+	staticDir = http.Dir("./webroot")
+	staticHandler = http.FileServer(staticDir)
+	//
+	mux.Handle("/", http.StripPrefix("/", staticHandler))
 	// 启动 TCP 监听
 	if listener, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(G_config.ApiPort)); err != nil {
 		return err
