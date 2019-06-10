@@ -60,7 +60,7 @@ func (jobManager *JobManager) SaveJob(job *common.Job) (oldJob *common.Job, err 
 		oldJobObj common.Job
 	)
 	// etcd 路径
-	jobKey = common.JOB_SAVE_DIR + job.Name
+	jobKey = common.JobSaveDir + job.Name
 	// 任务信息 JSON
 	if jobValue, err = json.Marshal(job); err != nil {
 		return
@@ -88,7 +88,7 @@ func (jobManager *JobManager) DeleteJob(name string) (oldJob *common.Job, err er
 		oldObj common.Job
 	)
 	// etcd 中保存任务的 key
-	jobKey = common.JOB_SAVE_DIR + name
+	jobKey = common.JobSaveDir + name
 	// 从 etcd 中删除
 	if delResp, err = jobManager.kv.Delete(context.TODO(), jobKey, clientv3.WithPrevKV()); err != nil {
 		return
@@ -111,7 +111,7 @@ func (jobManager *JobManager) ListJobs() (jobList []*common.Job, err error) {
 		kv *mvccpb.KeyValue
 		job *common.Job
 	)
-	dirKey = common.JOB_SAVE_DIR
+	dirKey = common.JobSaveDir
 	// 获取指定前缀(目录)的所有任务信息
 	if getResp, err = jobManager.kv.Get(context.TODO(), dirKey, clientv3.WithPrefix()); err != nil {
 		return
@@ -127,5 +127,27 @@ func (jobManager *JobManager) ListJobs() (jobList []*common.Job, err error) {
 		}
 		jobList = append(jobList, job)
 	}
+	return
+}
+
+// 杀死任务
+func (jobManager *JobManager) KillJob(name string) (err error) {
+	// 向 /cron/killer/ 目录更新任务名
+	var (
+		killerKey string
+		leaseGrantResp *clientv3.LeaseGrantResponse
+		leaseId clientv3.LeaseID
+	)
+	killerKey = common.JobKillDir + name
+	// 让 worker 监听到一次 put 操作, 创建一个租约让其自动过期即可
+	if leaseGrantResp, err = jobManager.lease.Grant(context.TODO(), 1); err != nil {
+		return
+	}
+	leaseId = leaseGrantResp.ID
+	// 设置 killer 标记
+	if _, err = jobManager.kv.Put(context.TODO(), killerKey, "", clientv3.WithLease(leaseId)); err != nil {
+		return
+	}
+	
 	return
 }

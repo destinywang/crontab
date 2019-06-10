@@ -96,6 +96,26 @@ func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// 强制杀死某个任务
+func handleJobKill(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err error
+		name string
+		bytes[] byte
+	)
+	if err = req.ParseForm(); err != nil {
+		log.Fatal("err: ", err)
+	}
+	name = req.PostForm.Get("name")
+	if err = G_jobManager.KillJob(name); err != nil {
+		log.Fatal("err: ", err)
+	}
+	// 返回正常应答
+	if bytes, err = common.BuildResp(0, "success", nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
 // 初始化服务
 func InitApiServer() (err error) {
 	var (
@@ -108,6 +128,7 @@ func InitApiServer() (err error) {
 	mux.HandleFunc("/job/save", handleJobSave)
 	mux.HandleFunc("/job/delete", handleJobDelete)
 	mux.HandleFunc("/job/list", handleJobList)
+	mux.HandleFunc("/job/kill", handleJobKill)
 	fmt.Println("G_config: ", G_config)
 	// 启动 TCP 监听
 	if listener, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(G_config.ApiPort)); err != nil {
