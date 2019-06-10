@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-crontab/master"
 	"runtime"
+	"time"
 )
 
 var (
@@ -43,6 +44,9 @@ func main() {
 	if err = master.InitApiServer(); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("ok")
+	for {
+		fmt.Println("ok")
+		time.Sleep(1 * time.Minute)
+	}
 	return
 }

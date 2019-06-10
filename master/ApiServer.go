@@ -30,16 +30,28 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 		err error
 		postForm string
 		job common.Job
+		oldJob *common.Job
+		bytes []byte
 	)
 	if err = req.ParseForm(); err != nil {
+		//resp.Write(common.BuildErrResp(err))
 		fmt.Println("err: ", err)
 	}
 	// 2. 取表单的 job 字段
 	postForm = req.PostForm.Get("job")
 	// 3. 反序列化 job
 	if err = json.Unmarshal([]byte(postForm), &job); err != nil {
-	
+		fmt.Println("err: ", err)
 	}
+	// 4. 保存到 etcd
+	if oldJob, err = G_jobManager.SaveJob(&job); err != nil {
+		fmt.Println("err: ", err)
+	}
+	// 5. 返回正常应答
+	if bytes, err = common.BuildResp(0, "success", oldJob); err == nil {
+		resp.Write(bytes)
+	}
+	return
 }
 
 // 初始化服务
