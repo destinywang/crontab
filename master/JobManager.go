@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/go-crontab/common"
 	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/mvcc/mvccpb"
 	"time"
 )
 
@@ -59,7 +60,7 @@ func (jobManager *JobManager) SaveJob(job *common.Job) (oldJob *common.Job, err 
 		oldJobObj common.Job
 	)
 	// etcd 路径
-	jobKey = "/cron/jobs/" + job.Name
+	jobKey = common.JOB_SAVE_DIR + job.Name
 	// 任务信息 JSON
 	if jobValue, err = json.Marshal(job); err != nil {
 		return
@@ -76,6 +77,55 @@ func (jobManager *JobManager) SaveJob(job *common.Job) (oldJob *common.Job, err 
 			return
 		}
 		oldJob = &oldJobObj
+	}
+	return
+}
+
+func (jobManager *JobManager) DeleteJob(name string) (oldJob *common.Job, err error) {
+	var (
+		jobKey string
+		delResp *clientv3.DeleteResponse
+		oldObj common.Job
+	)
+	// etcd 中保存任务的 key
+	jobKey = common.JOB_SAVE_DIR + name
+	// 从 etcd 中删除
+	if delResp, err = jobManager.kv.Delete(context.TODO(), jobKey, clientv3.WithPrevKV()); err != nil {
+		return
+	}
+	// 返回被删除的任务信息
+	if len(delResp.PrevKvs) != 0 {
+		if err = json.Unmarshal(delResp.PrevKvs[0].Value, &oldObj); err != nil {
+			err = nil
+			return
+		}
+		oldJob = &oldObj
+	}
+	return
+}
+
+func (jobManager *JobManager) ListJobs() (jobList []*common.Job, err error) {
+	var (
+		dirKey string
+		getResp *clientv3.GetResponse
+		kv *mvccpb.KeyValue
+		job *common.Job
+	)
+	dirKey = common.JOB_SAVE_DIR
+	// 获取指定前缀(目录)的所有任务信息
+	if getResp, err = jobManager.kv.Get(context.TODO(), dirKey, clientv3.WithPrefix()); err != nil {
+		return
+	}
+	// 初始化数组
+	jobList = make([]*common.Job, 0)
+	// 遍历所有任务进行反序列化
+	for _, kv = range getResp.Kvs {
+		job = &common.Job{}
+		if err = json.Unmarshal(kv.Value, job); err != nil {
+			err = nil
+			continue
+		}
+		jobList = append(jobList, job)
 	}
 	return
 }

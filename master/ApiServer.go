@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-crontab/common"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -54,6 +55,47 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	return
 }
 
+// 删除任务接口
+// POST /job/delete name=job1
+func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err error
+		name string
+		oldJob *common.Job
+		bytes []byte
+	)
+	// POST: name=job1&code=1
+	if err = req.ParseForm(); err != nil {
+		log.Fatal("err: ", err)
+	}
+	// 删除的任务名
+	name = req.PostForm.Get("name")
+	// 删除任务
+	if oldJob, err = G_jobManager.DeleteJob(name); err != nil {
+		log.Fatal("err: ", err)
+	}
+	// 正常应答
+	if bytes, err = common.BuildResp(0, "success", oldJob); err == nil {
+		resp.Write(bytes)
+	}
+}
+
+// 查询任务列表
+func handleJobList(resp http.ResponseWriter, req *http.Request) {
+	var (
+		jobList []*common.Job
+		err error
+		bytes []byte
+	)
+	if jobList, err = G_jobManager.ListJobs(); err != nil {
+		log.Fatal("err: ", err)
+	}
+	// 返回正常应答
+	if bytes, err = common.BuildResp(0, "success", jobList); err == nil {
+		resp.Write(bytes)
+	}
+}
+
 // 初始化服务
 func InitApiServer() (err error) {
 	var (
@@ -64,6 +106,8 @@ func InitApiServer() (err error) {
 	// 配置路由
 	mux = http.NewServeMux()
 	mux.HandleFunc("/job/save", handleJobSave)
+	mux.HandleFunc("/job/delete", handleJobDelete)
+	mux.HandleFunc("/job/list", handleJobList)
 	fmt.Println("G_config: ", G_config)
 	// 启动 TCP 监听
 	if listener, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(G_config.ApiPort)); err != nil {
