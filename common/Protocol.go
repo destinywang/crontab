@@ -1,6 +1,9 @@
 package common
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // 定时任务 Job
 type Job struct {
@@ -42,4 +45,21 @@ func BuildErrResp(newErr error) (resp []byte, err error) {
 	
 	}
 	return
+}
+
+func UnpackJob(value []byte) (ret *Job, err error) {
+	var (
+		job *Job
+	)
+	job = &Job{}
+	if err = json.Unmarshal(value, job); err != nil {
+		return
+	}
+	ret = job
+	return
+}
+
+// 提取任务名
+func ExtractJobName(jobKey string) (string) {
+	return strings.TrimPrefix(jobKey, JobSaveDir)
 }

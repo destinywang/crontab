@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-crontab/master"
+	"github.com/DestinyWang/go-crontab/master"
 	"runtime"
 	"time"
 )
