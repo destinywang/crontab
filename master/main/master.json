@@ -6,5 +6,6 @@
   "etcdEndpoints": [
     "127.0.0.1:2379"
   ],
-  "etcdDialTimeout": 5000
+  "etcdDialTimeout": 5000,
+  "webroot": "./webroot"
 }

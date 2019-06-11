@@ -82,6 +82,7 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 
 // 查询任务列表
 func handleJobList(resp http.ResponseWriter, req *http.Request) {
+	fmt.Println("handleJobList")
 	var (
 		jobList []*common.Job
 		err     error
@@ -134,9 +135,9 @@ func InitApiServer() (err error) {
 	//fmt.Println("G_config: ", G_config)
 	log.Print("G_config: ", G_config)
 	// 静态文件目录
-	staticDir = http.Dir("./webroot")
+	staticDir = http.Dir(G_config.WebRoot)
 	staticHandler = http.FileServer(staticDir)
-	//
+	// /index.html -> index.html -> ./webroot/index.html
 	mux.Handle("/", http.StripPrefix("/", staticHandler))
 	// 启动 TCP 监听
 	if listener, err = net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(G_config.ApiPort)); err != nil {
