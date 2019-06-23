@@ -42,9 +42,10 @@ func (jobManager *JobManager) watchJobs() (err error) {
 	// 遍历当前任务
 	for _, kv = range getResp.Kvs {
 		if job, err = common.UnpackJob(kv.Value); err == nil {
-			// TODO 把 job 同步给 scheduler(调度协程)
 			jobEvent = common.BuildJobEvent(common.JOB_EVENT_SAVE, job)
-			fmt.Printf("exists: %v", *jobEvent)
+			// 把 job 同步给 scheduler(调度协程)
+			G_scheduler.PushJobEvent(jobEvent)
+			fmt.Printf("exists: %v\n", *jobEvent)
 		} else {
 			continue
 		}
@@ -75,8 +76,8 @@ func (jobManager *JobManager) watchJobs() (err error) {
 					jobEvent = common.BuildJobEvent(common.JOB_EVENT_DEL, job)
 				}
 				// 推给 scheduler
-				// G_Scheduler.PushJobEvent(jobEvent)
-				fmt.Printf("new: %v", *jobEvent)
+				G_scheduler.PushJobEvent(jobEvent)
+				fmt.Printf("new: %v\n", *jobEvent)
 			}
 		}
 	}()
