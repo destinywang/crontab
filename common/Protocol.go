@@ -18,6 +18,12 @@ type Response struct {
 	Data interface{} `json:"data"`
 }
 
+// 变化事件
+type JobEvent struct {
+	EventType int
+	job *Job
+}
+
 func BuildResp(errno int, msg string, data interface{}) (resp []byte, err error) {
 	// 1. 定义一个 response
 	var (
@@ -62,4 +68,12 @@ func UnpackJob(value []byte) (ret *Job, err error) {
 // 提取任务名
 func ExtractJobName(jobKey string) (string) {
 	return strings.TrimPrefix(jobKey, JobSaveDir)
+}
+
+// 任务变化事件: 更新和删除
+func BuildJobEvent(eventType int, job *Job) (jobEvent *JobEvent) {
+	return &JobEvent{
+		EventType:eventType,
+		job:job,
+	}
 }

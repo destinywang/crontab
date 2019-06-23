@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/DestinyWang/go-crontab/worker"
+	"log"
 	"runtime"
+	"time"
 )
 
 var (
@@ -18,7 +20,7 @@ func initEnv() {
 
 // 解析命令行参数
 func initArgs() {
-	// 支持 `master -config ./master.json` 方式传入参数
+	// 支持 `worker -config ./master.json` 方式传入参数
 	flag.StringVar(&confPath, "config", "./worker.json", "worker 端系统配置文件路径")
 	flag.Parse()
 }
@@ -39,6 +41,9 @@ func main() {
 	if err = worker.InitJobManager(); err != nil {
 		fmt.Println("err: ", err)
 	}
-	
+	log.Print("initJobManager success")
+	for {
+		time.Sleep(time.Second)
+	}
 	return
 }
